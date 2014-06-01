@@ -3,14 +3,14 @@ var url = require("url");
 var https = require("https");
 var FormData = require("form-data");
 
-module.exports = MailHandler;
+module.exports = MandrilHandler;
 
-function MailHandler(config,callback){
+function MandrilHandler(config){
   this.config = config || {};
 }
 
 
-MailHandler.prototype.mailUsingMandril = function mailUsingMandril(input,callback){
+MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCallBack,httpResponse){
 	
  var data = {
     "key": this.config.key,
@@ -52,47 +52,24 @@ MailHandler.prototype.mailUsingMandril = function mailUsingMandril(input,callbac
   	    });
   	    
   	    response.on("end",function(){
+  	    	var jsonobj = JSON.parse(body);
   	    	console.log(" complete response " + JSON.stringify(body));
+  	    	console.log("Status code of the message " + response.statusCode);
+  	    	if(response.statusCode === 200){//happy case
+  	    		passCallBack(jsonobj,httpResponse);
+  	    	}else{
+  	    		this.error(jsonobj,response,failCallBack);
+  	    	}
   	    });
   	 
   });
   
-   req.write(dataString);
-   req.end();
+  req.write(dataString);
+  req.end();
 }
 
-MailHandler.prototype.mailUsingMailGun = function mailUsingMailGun(input,callback){
-	var form = new FormData();
-    for(var key in input){
-	   form.append(key,input[key]);
-	}
-	
-	form.append("o:tracking-clicks","htmlonly");
-	form.append("CNAME","http://bin.mailgun.net/4f66d299");
-	
-	var options = {
-  	host: "api.mailgun.net",
-  	port: 443,
-  	protocol : "https:",
-  	path: "/v2/sandboxb1d2f138f95d472a9931f9ee8af8f36c.mailgun.org/messages",
-  	method: "POST",
-  	auth :this.config.key
-    };
-    
-    form.submit(options,function(err,res){
-       if(res){
-       	var body = "";
-  	    res.on("data",function(chunk){
-  	    	body+=chunk.toString();
-  	    });
-  	    
-  	    res.on("end",function(){
-  	    	console.log("Status Code = " + res.statusCode);
-  	    	console.log("complete response " + JSON.stringify(body));
-  	    });
-       }
-       if(err){
-       	   console.log("Error Happened");
-       }
-    });
+
+MandrilHandler.prototype.error = function error(input,failCallBack){
+   console.log("Mandril Error ");
+
 }
