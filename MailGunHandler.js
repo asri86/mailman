@@ -10,6 +10,16 @@ function MailGunHandler(config){
 }
 
 
+
+/**
+ *  This method sends mail using Mandril Service , in case of error it propogates the information 
+ *  back to original caller
+ * @input : A json object for all the input fields
+ * @passCallback : To notify caller back about success
+ * @failCallBack : To notify caller back about failures
+ * @httpResponse : http response object for current request in progress
+ */
+
 MailGunHandler.prototype.sendMail = function sendMail(input,passCallBack, failCallBack,httpResponse){
 	var form = new FormData();
     for(var key in input){

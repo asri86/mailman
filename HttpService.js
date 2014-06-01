@@ -49,7 +49,8 @@ function handleFailure(errorCode,errorMessage,response){
   	    response.write(JSON.stringify(errorMessage));
   	}else if(errorCode === "RETRY"){ //either a timeout or server error
 		//auto recovery check which service has been tried and try each service provider once 
-		//if both fails then quit 
+		//if both fails then quit , max one try with each service  
+		
 		
 	}else{//default case
 	}

@@ -2,6 +2,7 @@ var http = require("http");
 var url = require("url");
 var https = require("https");
 var FormData = require("form-data");
+var merge = require("merge");
 
 module.exports = MandrilHandler;
 
@@ -10,7 +11,17 @@ function MandrilHandler(config){
 }
 
 
+/**
+ *  This method sends mail using Mandril Service , in case of error it propogates the information 
+ *  back to original caller
+ * @input : A json object for all the input fields
+ * @passCallback : To notify caller back about success
+ * @failCallBack : To notify caller back about failures
+ * @httpResponse : http response object for current request in progress
+ */
+
 MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCallBack,httpResponse){
+  var _self = this;
 	
  var data = {
     "key": this.config.key,
@@ -58,18 +69,31 @@ MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCal
   	    	if(response.statusCode === 200){//happy case
   	    		passCallBack(jsonobj,httpResponse);
   	    	}else{
-  	    		this.error(jsonobj,response,failCallBack);
+  	    		_self.error(jsonobj,response,failCallBack,httpResponse);
   	    	}
   	    });
-  	 
   });
   
   req.write(dataString);
   req.end();
 }
 
-
-MandrilHandler.prototype.error = function error(input,failCallBack){
-   console.log("Mandril Error ");
-
+//assign a errorCode based on httpStatus codes
+MandrilHandler.prototype.error = function error(input,response,failCallBack,httpResponse){
+	//http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+	//4XX clientError 5XX serverError
+    var ec = response.statusCode / 100;
+    var errorCode = "";
+	if(ec === 4){
+		errorCode = "BADINPUT";
+	}else if(ec === 5){
+		if(input.name === "ValidationError" || input.name === "Invalid_Key"){//specific error cases from mandril that may indicate input is corrupt
+			errorCode = "BADINPUT";
+		}else{
+			errorCode = "RETRY";
+		}
+	}else{ //other status code in default error
+		errorCode = "BADINPUT";
+	}
+	failCallBack(errorCode,input,httpResponse);
 }
