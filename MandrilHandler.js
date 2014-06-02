@@ -12,7 +12,7 @@ function MandrilHandler(config){
 
 
 /**
- *  This method sends mail using Mandril Service , in case of error it propogates the information 
+ *  This method sends mail using Mandril Service , in case of error it throws the information 
  *  back to original caller
  * @input : A json object for all the input fields
  * @passCallback : To notify caller back about success
@@ -26,7 +26,6 @@ MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCal
  var data = {
     "key": this.config.key,
     "message": {
-        "html": "<p>Example HTML content</p>",
         "text": input["body"],
         "subject": input["subject"],
         "from_email": input["from"],
@@ -69,7 +68,7 @@ MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCal
   	    	if(response.statusCode === 200){//happy case
   	    		passCallBack(jsonobj,httpResponse);
   	    	}else{
-  	    		_self.error(jsonobj,response,failCallBack,httpResponse);
+  	    		failCallBack(jsonobj,httpResponse);
   	    	}
   	    });
   });
@@ -78,22 +77,34 @@ MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCal
   req.end();
 }
 
-//assign a errorCode based on httpStatus codes
-MandrilHandler.prototype.error = function error(input,response,failCallBack,httpResponse){
-	//http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-	//4XX clientError 5XX serverError
+
+
+/** Inspect error message from service and unify them based on codes and message. I have broadly divided into 
+* 4XX and 5XX error cases and some service specific error cases
+*   http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+*   4XX clientError 5XX serverError
+*   assign a errorCode based on httpStatus codes
+*/
+
+MandrilHandler.prototype.error = function error(input,response,failCallBack,httpResponse,jsonRequest){
+	var _self = this;
     var ec = response.statusCode / 100;
     var errorCode = "";
 	if(ec === 4){
 		errorCode = "BADINPUT";
 	}else if(ec === 5){
 		if(input.name === "ValidationError" || input.name === "Invalid_Key"){//specific error cases from mandril that may indicate input is corrupt
-			errorCode = "BADINPUT";
-		}else{
 			errorCode = "RETRY";
+		}else{
+			if(_self.config.def === true ){ //if this service was default handler we can retry
+			 	errorCode = "RETRY";
+			 }else{
+			 	errorCode = "QUIT";
+			 }
 		}
 	}else{ //other status code in default error
 		errorCode = "BADINPUT";
 	}
-	failCallBack(errorCode,input,httpResponse);
+	
+	failCallBack(errorCode,input,httpResponse,jsonRequest);
 }

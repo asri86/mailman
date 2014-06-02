@@ -10,14 +10,15 @@ var MailGunHandler = require("./MailGunHandler");
 var mailHandlers = {
 	defaultHandler :null, 
 	mailgun : null,
-	mandril : null
+	mandril : null,
+	defServiceName : ""
 }
 
-//use errorCodes to take right action
+
+//ERROCODE to unify the logic for error handling for both the email services
 var errorCodes = {
 	inputError : "BADINPUT",
 	serverError : "RETRY"
-	
 }
 
 
@@ -30,31 +31,22 @@ function onRequest(request, response) {
   }
 }
 
-
-function sendFailureSignal(response){
-	response.writeHead(400, {"Content-Type" : "text/plain"});
-  	response.write("Input parameter is Missing");
-  	response.end();
-}
-
 function sendSuccessSignal(input,response){
 	response.writeHead(200, {"Content-Type" : "text/plain"});
   	response.write(JSON.stringify(input));
   	response.end();
 }
 
-function handleFailure(errorCode,errorMessage,response){
-	if(errorCode === "BADINPUT"){
-		response.writeHead(400, {"Content-Type" : "text/plain"});
-  	    response.write(JSON.stringify(errorMessage));
-  	}else if(errorCode === "RETRY"){ //either a timeout or server error
-		//auto recovery check which service has been tried and try each service provider once 
-		//if both fails then quit , max one try with each service  
-		
-		
-	}else{//default case
-	}
-	response.end();
+
+/**
+*This function does the error handling on the basis of errorCode. In case of BADINPUT 
+* notification is sent back to caller. If the error code is retry then , it tries making one
+* more attempt for sending email using another service. 
+*/ 
+function handleFailure(error,response){
+	response.writeHead(400, {"Content-Type" : "text/plain"});
+  	response.write(JSON.stringify(error));
+  	response.end();
 }
 
 
@@ -99,24 +91,31 @@ function inputValidator(input,handler,httpResponse){
 function start(){
 	//parse all input options
 	var options = stdio.getopt({
-        "key": {key: "K", args: 1, description: "Your private key to make API calls", mandatory:true},
-        "service": {key:"S" , args: 1, description: "Mail Service provider mailgun,mandrill"}
+        "key": {key: "K", args: 1, description: "Your private key to make API calls mandril key,mailgun key", mandatory:true},
+        "service": {key:"S" , args: 1, description: "Mail Service provider mailgun,mandrill", mandatory:true}
 	});
-	//assuming key is valid 
-	var config = {key : options.key};
 	
+	
+	//set the default mail service 
 	if(options.service === "mandril"){
-		mailHandlers.mandril = new MandrilHandler(config);
+		var mandrilConfig = {key : options.key,
+						  handlerName : "mandril",
+						  def : true};
+		mailHandlers.mandril = new MandrilHandler(mandrilConfig);
 	}else if(options.service === "mailgun"){
-		mailHandlers.mailgun = new MailGunHandler(config);
+		var mandrilConfig = {key : options.key,
+						  handlerName : "mailgun",
+						  def : true};
+		mailHandlers.mailgun = new MailGunHandler(mailgunConfig);
 	}else{
 		console.log("MailService providers must match mailgun or mandril");
 	}
-	
+	//set the deault handler
 	mailHandlers.defaultHandler = mailHandlers.mandril || mailHandlers.mailgun;
 	
+	
 	http.createServer(onRequest).listen(8888);
-	console.log("Server has started");
+	console.log("Server started !!!");
 }
 
 //start the server

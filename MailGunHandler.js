@@ -21,13 +21,11 @@ function MailGunHandler(config){
  */
 
 MailGunHandler.prototype.sendMail = function sendMail(input,passCallBack, failCallBack,httpResponse){
+	var _self = this;
 	var form = new FormData();
     for(var key in input){
 	   form.append(key,input[key]);
 	}
-	
-	form.append("o:tracking-clicks","htmlonly");
-	form.append("CNAME","http://bin.mailgun.net/4f66d299");
 	
 	var options = {
   	host: "api.mailgun.net",
@@ -46,12 +44,37 @@ MailGunHandler.prototype.sendMail = function sendMail(input,passCallBack, failCa
   	    });
   	    
   	    res.on("end",function(){
+  	    	var jsonobj = JSON.parse(body);
   	    	console.log("Status Code = " + res.statusCode);
   	    	console.log("complete response " + JSON.stringify(body));
+  	    	if(res.statusCode === 200){//happy case
+  	    		passCallBack(jsonobj,httpResponse);
+  	    	}else{
+  	    		 failCallBack(jsonobj,httpResponse);
+  	    	}
   	    });
        }
-       if(err){
-       	   console.log("Error Happened");
-       }
     });
+}
+
+
+//unused
+
+MailGunHandler.prototype.error = function error(input,response,failCallBack,httpResponse,jsonRequest){
+	var _self = this;
+    var ec = response.statusCode / 100;
+    var errorCode = "";
+    console.log("Mailgun error handler " + ec);
+	if(ec === 4){
+		errorCode = "BADINPUT";
+	}else if(ec === 5){
+		if(_self.config.def === true ) {//if this service was default handler we can retry
+			 	errorCode = "RETRY";
+		}else{
+			 errorCode = "QUIT";
+		}
+	}else{ //other status code in default error
+		errorCode = "BADINPUT";
+	}
+	failCallBack(errorCode,input,httpResponse,jsonRequest);
 }
