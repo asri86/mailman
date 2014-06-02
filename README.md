@@ -26,7 +26,7 @@ node HttpService.js -K YOURKEY -S SERVICEPROVIDER [mandril or mailgun]
 
 
 
-##use curl to post data to your http service
+###use curl to post data to your http service
 
 curl -v -X POST localhost:8888/email -d '{ 
  "to": "test@gmail.com", 
@@ -34,6 +34,12 @@ curl -v -X POST localhost:8888/email -d '{
  "from": "noreply@uber.com", "from_name" : "Uber", 
  "subject": "A Message from Uber", "body": "\<h1\>Your Bill\</h1\> \<p\>$10\</p\>" 
 }' -H "Content-Type:application/json"
+
+
+### Development and Testing 
+
+Operating System OS X - 10.9.3
+Node version v0.10.28
 
 
 
