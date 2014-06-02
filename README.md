@@ -32,7 +32,7 @@ curl -v -X POST localhost:8888/email -d '{
  "to": "test@gmail.com", 
  "to_name": "Ms. Fake",
  "from": "noreply@uber.com", "from_name" : "Uber", 
- "subject": "A Message from Uber", "body": "\<h1\>Your Bill\</h1\> <p>$10</p>" 
+ "subject": "A Message from Uber", "body": "\<h1\>Your Bill\</h1\> \<p\>$10\</p\>" 
 }' -H "Content-Type:application/json"
 
 
