@@ -24,21 +24,16 @@ cd mailman
 node HttpService.js -K YOURKEY -S SERVICEPROVIDER [mandril or mailgun]
 
 
+
+#use curl to post data to your http service
 curl -v -X POST localhost:8888/email -d '{ 
- "to": "amit.vers@gmail.com", 
+ "to": "test@gmail.com", 
  "to_name": "Ms. Fake",
  "from": "noreply@uber.com", "from_name" : "Uber", 
  "subject": "A Message from Uber", "body": "<h1>Your Bill</h1><p>$10</p>" 
 }' -H "Content-Type:application/json"
 
 
-
-
-
-#I just started using Node.js for this project so I tried to keep myself away from using any modules.
-I used form-data that was required to post a form to MailGun api. 
-
-#
 
 
  
