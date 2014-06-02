@@ -3,8 +3,10 @@ var url = require("url");
 var https = require("https");
 var FormData = require("form-data");
 var stdio = require('stdio');
+var htmlToText = require('html-to-text');
 var MandrilHandler = require("./MandrilHandler");
 var MailGunHandler = require("./MailGunHandler");
+
 
 
 var mailHandlers = {
@@ -71,19 +73,25 @@ function emailHandler(request,response){
 //TODO better input validator , like check email format etc...
 function inputValidator(input,handler,httpResponse){
 	var errorMessage = {};
+	var inputData = {};
    var count = 6;
 	var requiredParam = ["to","to_name","from","from_name","subject","body"];
 	requiredParam.forEach(function(key){
 		if(input[key] != null && (input[key]).toString().length > 0){
-		    count--;
+			if(key === "body"){
+				inputData["text"] = htmlToText.fromString(input["body"], { wordwrap: 100});
+			}else{
+				inputData[key] = input[key];
+			} 
+			count--;
 		}else{
 			errorMessage[key + "_errorMessage" ] =  " has unexpected value = " + input[key];
 		}
 	});
 	if(count !=0){
-		handleFailure(errorCodes.inputError, errorMessage, httpResponse);
+		handleFailure(errorMessage, httpResponse);
 	}else{
-		handler.sendMail(input,sendSuccessSignal,handleFailure,httpResponse)
+		handler.sendMail(inputData,sendSuccessSignal,handleFailure,httpResponse)
 	}
 }
 
@@ -103,7 +111,7 @@ function start(){
 						  def : true};
 		mailHandlers.mandril = new MandrilHandler(mandrilConfig);
 	}else if(options.service === "mailgun"){
-		var mandrilConfig = {key : options.key,
+		var mailgunConfig = {key : options.key,
 						  handlerName : "mailgun",
 						  def : true};
 		mailHandlers.mailgun = new MailGunHandler(mailgunConfig);

@@ -23,7 +23,8 @@ function MailGunHandler(config){
 MailGunHandler.prototype.sendMail = function sendMail(input,passCallBack, failCallBack,httpResponse){
 	var _self = this;
 	var form = new FormData();
-    for(var key in input){
+	
+	for(var key in input){
 	   form.append(key,input[key]);
 	}
 	
