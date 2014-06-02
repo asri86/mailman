@@ -26,7 +26,7 @@ MandrilHandler.prototype.sendMail = function sendMail(input,passCallBack,failCal
  var data = {
     "key": this.config.key,
     "message": {
-        "text": input["body"],
+        "text": input["text"],
         "subject": input["subject"],
         "from_email": input["from"],
         "from_name": input["from_name"],
